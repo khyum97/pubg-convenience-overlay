@@ -1,0 +1,20 @@
+{
+  "hotkeys": {
+    "loot_hud_hold": "VK_TAB",
+    "crosshair_toggle": "VK_F1",
+    "bluezone_advance": "VK_F2",
+    "grenade_timer": "VK_F3",
+    "preset_switch": "VK_F4",
+    "toggle_part_w1": "VK_F5",
+    "toggle_part_w2": "VK_F6",
+    "reset_session": "VK_F7",
+    "exit_app": "VK_F9"
+  },
+  "settings": {
+    "loot_hud_hold_mode": true,
+    "sound_enabled": true,
+    "crosshair_style": "dot",
+    "crosshair_color": "#00FF66",
+    "crosshair_size": 4
+  }
+}
