@@ -117,7 +117,14 @@ BLUEZONE_PHASES = [
 
 class GameStateManager:
     def __init__(self):
-        self.presets = DEFAULT_PRESETS
+        self.presets = [
+            {
+                "name": p["name"],
+                "weapon1": WeaponLoadout(p["weapon1"].name, p["weapon1"].category, list(p["weapon1"].attachments)),
+                "weapon2": WeaponLoadout(p["weapon2"].name, p["weapon2"].category, list(p["weapon2"].attachments))
+            }
+            for p in DEFAULT_PRESETS
+        ]
         self.current_preset_idx = 0
         self.consumables = [ConsumableItem(c.name, c.target_count) for c in DEFAULT_CONSUMABLES]
         
@@ -227,3 +234,60 @@ class GameStateManager:
             self.grenade_active = False
             event = "detonated"
         return event
+
+    def update_from_ocr_text(self, text: str) -> dict:
+        """Parse recognized OCR text from PUBG inventory screen and auto-update loot state"""
+        if not text:
+            return {"attachments": [], "consumables": []}
+
+        import re
+        text_lower = text.lower()
+        results = {"attachments": [], "consumables": []}
+
+        # Check weapon 1 attachments
+        w1 = self.current_preset["weapon1"]
+        for idx, att in enumerate(w1.attachments):
+            if w1.checked[idx]:
+                continue
+            kws = [k.lower() for k in re.findall(r'[a-zA-Z가-힣0-9]+', att) if len(k) >= 2]
+            for kw in kws:
+                if kw in text_lower:
+                    w1.checked[idx] = True
+                    results["attachments"].append(f"{w1.name}: {att}")
+                    break
+
+        # Check weapon 2 attachments
+        w2 = self.current_preset["weapon2"]
+        for idx, att in enumerate(w2.attachments):
+            if w2.checked[idx]:
+                continue
+            kws = [k.lower() for k in re.findall(r'[a-zA-Z가-힣0-9]+', att) if len(k) >= 2]
+            for kw in kws:
+                if kw in text_lower:
+                    w2.checked[idx] = True
+                    results["attachments"].append(f"{w2.name}: {att}")
+                    break
+
+        # Check consumables count patterns e.g. '구급상자 3' or 'First Aid 4'
+        consumable_patterns = {
+            "구급상자": [r'구급상자\s*[:xX]?\s*(\d+)', r'first\s*aid\s*[:xX]?\s*(\d+)'],
+            "드링크/진통제": [r'진통제\s*[:xX]?\s*(\d+)', r'드링크\s*[:xX]?\s*(\d+)', r'painkiller\s*[:xX]?\s*(\d+)', r'energy\s*[:xX]?\s*(\d+)'],
+            "연막탄": [r'연막탄?\s*[:xX]?\s*(\d+)', r'smoke\s*[:xX]?\s*(\d+)'],
+            "수류탄": [r'수류탄?\s*[:xX]?\s*(\d+)', r'frag\s*[:xX]?\s*(\d+)', r'grenade\s*[:xX]?\s*(\d+)'],
+            "붕대": [r'붕대\s*[:xX]?\s*(\d+)', r'bandage\s*[:xX]?\s*(\d+)']
+        }
+
+        for c in self.consumables:
+            patterns = consumable_patterns.get(c.name, [])
+            for pat in patterns:
+                m = re.search(pat, text_lower)
+                if m:
+                    try:
+                        c.current_count = int(m.group(1))
+                        results["consumables"].append(f"{c.name}: {c.current_count}개")
+                        break
+                    except ValueError:
+                        pass
+
+        return results
+

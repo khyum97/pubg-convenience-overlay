@@ -63,6 +63,12 @@ class PubgOverlayApp:
         self.loot_visible = False
         self.running = True
 
+        # OCR state & Toast notifications
+        self.ocr_enabled = self.config["settings"].get("ocr_enabled", False)
+        self.last_ocr_time = 0.0
+        self.toast_msg = ""
+        self.toast_expire = 0.0
+
         # Index tracker for toggling items via hotkey
         self.w1_item_idx = 0
         self.w2_item_idx = 0
@@ -85,10 +91,12 @@ class PubgOverlayApp:
                 "toggle_part_w1": "VK_F5",
                 "toggle_part_w2": "VK_F6",
                 "reset_session": "VK_F7",
+                "ocr_toggle": "VK_F8",
                 "exit_app": "VK_F9"
             },
             "settings": {
                 "loot_hud_hold_mode": True,
+                "ocr_enabled": False,
                 "sound_enabled": True,
                 "crosshair_style": "dot",
                 "crosshair_color": "#00FF66",
@@ -139,6 +147,51 @@ class PubgOverlayApp:
         if self.config["settings"].get("sound_enabled", True):
             threading.Thread(target=lambda: winsound.Beep(freq, duration_ms), daemon=True).start()
 
+    def show_toast(self, msg: str, duration: float = 2.0):
+        self.toast_msg = msg
+        self.toast_expire = time.time() + duration
+
+    def trigger_ocr_scan(self):
+        """Asynchronously capture screen and recognize inventory items via OCR"""
+        now = time.time()
+        if now - self.last_ocr_time < 2.0:
+            return
+        self.last_ocr_time = now
+
+        def _worker():
+            try:
+                import asyncio
+                import winocr
+                from PIL import ImageGrab
+
+                w, h = self.screen_width, self.screen_height
+                # Focus on the inventory area (center to right screen)
+                bbox = (int(w * 0.25), int(h * 0.1), int(w * 0.95), int(h * 0.9))
+                shot = ImageGrab.grab(bbox=bbox)
+
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                res = loop.run_until_complete(winocr.recognize_pil(shot, lang='ko'))
+                loop.close()
+
+                if res and res.text:
+                    changes = self.state.update_from_ocr_text(res.text)
+                    items = []
+                    if changes["attachments"]:
+                        items.extend(changes["attachments"])
+                    if changes["consumables"]:
+                        items.extend(changes["consumables"])
+                    if items:
+                        self.play_sound(1400, 60)
+                        summary = ", ".join(items[:2])
+                        self.show_toast(f"📷 [OCR 자동 파밍 감지] {summary}")
+            except ImportError:
+                self.show_toast("📷 [OCR] winocr 패키지가 필요합니다")
+            except Exception as e:
+                pass
+
+        threading.Thread(target=_worker, daemon=True).start()
+
     def get_vk(self, name: str) -> int:
         return VK_MAP.get(name, 0)
 
@@ -181,6 +234,11 @@ class PubgOverlayApp:
             else:
                 if loot_down and not prev_states.get("loot", False):
                     self.loot_visible = not self.loot_visible
+
+            # If TAB is pressed (inventory open) and OCR is enabled, scan screen
+            if loot_down and self.ocr_enabled:
+                self.trigger_ocr_scan()
+
             prev_states["loot"] = loot_down
 
             # 2. Crosshair Toggle (F1)
@@ -244,6 +302,19 @@ class PubgOverlayApp:
                 self.state.reset_bluezone()
                 self.play_sound(500, 150)
             prev_states["f7"] = f7_down
+
+            # 8-2. OCR Toggle (F8)
+            f8_vk = self.get_vk(hk.get("ocr_toggle", "VK_F8"))
+            f8_down = self.is_key_down(f8_vk)
+            if f8_down and not prev_states.get("f8", False):
+                self.ocr_enabled = not self.ocr_enabled
+                if self.ocr_enabled:
+                    self.play_sound(1200, 60)
+                    self.show_toast("📷 [OCR 자동 인식] ON: TAB 화면 자동 스캔")
+                else:
+                    self.play_sound(500, 80)
+                    self.show_toast("📷 [OCR 자동 인식] OFF: 수동 모드")
+            prev_states["f8"] = f8_down
 
             # 9. Exit (F9)
             f9_vk = self.get_vk(hk.get("exit_app", "VK_F9"))
@@ -346,6 +417,11 @@ class PubgOverlayApp:
         self.canvas.create_rectangle(px, py, px + panel_w, py + 38, fill="#1B2232", outline="")
         preset = self.state.current_preset
         self.canvas.create_text(px + 15, py + 19, text="📦 파밍 가이드 & 부착물 체크", anchor="w", fill="#00FFCC", font=("Segoe UI", 11, "bold"))
+        
+        # OCR Badge
+        ocr_badge = "📷 OCR: ON" if self.ocr_enabled else "📷 OCR: OFF"
+        ocr_col = "#00FF66" if self.ocr_enabled else "#8899AA"
+        self.canvas.create_text(px + panel_w - 75, py + 19, text=ocr_badge, anchor="e", fill=ocr_col, font=("Segoe UI", 9, "bold"))
         self.canvas.create_text(px + panel_w - 15, py + 19, text="[F4] 변경", anchor="e", fill="#8899AA", font=("Segoe UI", 9))
 
         curr_y = py + 48
@@ -396,15 +472,27 @@ class PubgOverlayApp:
 
         # Footer tips
         self.canvas.create_line(px + 15, py + panel_h - 32, px + panel_w - 15, py + panel_h - 32, fill="#243046")
-        tip_txt = "TAB 누르는 동안 표시됨 | [F7] 새 게임 리셋"
+        tip_txt = "TAB:표시 | [F8] OCR On/Off | [F7] 리셋"
         self.canvas.create_text(px + panel_w // 2, py + panel_h - 16, text=tip_txt, fill="#708090", font=("Segoe UI", 8))
 
     def draw_status_bar(self):
         """Top-left subtle status indicator"""
         # Shows when TAB is not held, as a minimal watermark guide
         if not self.loot_visible:
-            txt = "[PUBG HUD] TAB:파밍체커 | F1:조준점 | F2:자기장 | F3:수류탄 | F4:총기프리셋 | F9:종료"
+            ocr_flag = "ON" if self.ocr_enabled else "OFF"
+            txt = f"[PUBG HUD] TAB:파밍체커 | F1:조준점 | F2:자기장 | F3:수류탄 | F4:총기프리셋 | F8:OCR({ocr_flag}) | F9:종료"
             self.canvas.create_text(15, 15, text=txt, anchor="nw", fill="#445566", font=("Segoe UI", 8))
+
+    def draw_toast(self):
+        if self.toast_msg and time.time() < self.toast_expire:
+            cx = self.screen_width // 2
+            ty = 90
+            msg = self.toast_msg
+            w = max(260, len(msg) * 11 + 40)
+            x1, y1 = cx - w // 2, ty - 16
+            x2, y2 = cx + w // 2, ty + 16
+            self.canvas.create_rectangle(x1, y1, x2, y2, fill="#0F172A", outline="#38BDF8", width=1.5)
+            self.canvas.create_text(cx, ty, text=msg, fill="#F8FAFC", font=("Segoe UI", 10, "bold"))
 
     def update_ui(self):
         if not self.running:
@@ -416,6 +504,7 @@ class PubgOverlayApp:
         self.draw_bluezone_hud()
         self.draw_loot_hud()
         self.draw_status_bar()
+        self.draw_toast()
 
         self.root.after(20, self.update_ui)
 

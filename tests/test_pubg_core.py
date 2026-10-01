@@ -85,5 +85,23 @@ class TestPubgCore(unittest.TestCase):
         self.sm.reset_bluezone()
         self.assertFalse(self.sm.bluezone_active)
 
+    def test_ocr_parsing(self):
+        w1 = self.sm.current_preset["weapon1"]
+        self.assertFalse(w1.checked[0]) # 보정기
+
+        sample_text = "인벤토리 보정기 수직 손잡이 구급상자 3 연막탄 2"
+        res = self.sm.update_from_ocr_text(sample_text)
+
+        self.assertTrue(w1.checked[0]) # 보정기 checked
+        self.assertTrue(w1.checked[1]) # 수직손잡이 checked
+        
+        # Check consumables updated
+        first_aid = self.sm.consumables[0] # 구급상자
+        self.assertEqual(first_aid.current_count, 3)
+
+        smoke = self.sm.consumables[2] # 연막탄
+        self.assertEqual(smoke.current_count, 2)
+
 if __name__ == "__main__":
     unittest.main()
+
