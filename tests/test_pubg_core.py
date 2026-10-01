@@ -5,7 +5,7 @@ import sys
 # Ensure root directory is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pubg_core import GameStateManager, WeaponLoadout, ConsumableItem
+from pubg_core import GameStateManager, WeaponLoadout, ConsumableItem, MAP_DATA
 
 class TestPubgCore(unittest.TestCase):
     def setUp(self):
@@ -122,6 +122,20 @@ class TestPubgCore(unittest.TestCase):
             self.assertIn("y", v)
             self.assertTrue(0.0 <= v["x"] <= 1.0)
             self.assertTrue(0.0 <= v["y"] <= 1.0)
+
+        # Verify all maps in MAP_DATA have valid normalized coordinates
+        for map_name, map_data in MAP_DATA.items():
+            self.assertGreaterEqual(len(map_data["secret_rooms"]), 3)
+            self.assertGreaterEqual(len(map_data["vehicles"]), 3)
+            for r in map_data["secret_rooms"]:
+                self.assertTrue(0.0 <= r["x"] <= 1.0, f"Out of bounds in {map_name}: {r}")
+                self.assertTrue(0.0 <= r["y"] <= 1.0, f"Out of bounds in {map_name}: {r}")
+            for v in map_data["vehicles"]:
+                self.assertTrue(0.0 <= v["x"] <= 1.0, f"Out of bounds in {map_name}: {v}")
+                self.assertTrue(0.0 <= v["y"] <= 1.0, f"Out of bounds in {map_name}: {v}")
+
+        # Check Sanhok exists in MAP_DATA
+        self.assertIn("사녹 (Sanhok)", self.sm.map_names)
 
         next_m = self.sm.next_map()
         self.assertNotEqual(first_map, next_m)
