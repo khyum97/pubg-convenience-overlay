@@ -399,24 +399,46 @@ class PubgOverlayApp:
         if not self.state.grenade_active:
             return
         cx = self.screen_width // 2
-        cy = self.screen_height // 2 + 120
+        cy = self.screen_height // 2 + 130
         rem = self.state.grenade_remaining_sec
 
-        # Background badge
-        w, h = 220, 56
+        w, h = 260, 68
         x1, y1 = cx - w // 2, cy - h // 2
         x2, y2 = cx + w // 2, cy + h // 2
-        self.canvas.create_rectangle(x1, y1, x2, y2, fill="#111116", outline="#FF4444", width=2)
 
-        # Progress bar
+        # 1. Drop shadow
+        self.canvas.create_rectangle(x1 + 4, y1 + 4, x2 + 4, y2 + 4, fill="#020617", outline="")
+
+        # 2. Main card & pulsating hazard border
+        is_critical = rem <= 1.5
+        border_col = "#EF4444" if is_critical else ("#F59E0B" if rem <= 2.5 else "#10B981")
+        card_fill = "#180608" if is_critical else "#090E17"
+        self.canvas.create_rectangle(x1, y1, x2, y2, fill=card_fill, outline=border_col, width=2)
+
+        # 3. Top title tag
+        header_text = "⚡ THROW NOW! (즉시 투척)" if is_critical else "💣 GRENADE FUSE COOKING"
+        header_col = "#FCA5A5" if is_critical else "#94A3B8"
+        self.canvas.create_text(cx, y1 + 16, text=header_text, fill=header_col, font=("Segoe UI", 9, "bold"))
+
+        # 4. Large Digital Timer
+        timer_col = "#FF2222" if is_critical else ("#FBBF24" if rem <= 2.5 else "#34D399")
+        self.canvas.create_text(cx, cy + 2, text=f"{rem:.1f}s", fill=timer_col, font=("Segoe UI", 16, "bold"))
+
+        # 5. Segmented Progress Bar
+        bar_x1 = x1 + 16
+        bar_x2 = x2 - 16
+        bar_y1 = y2 - 14
+        bar_y2 = y2 - 8
+        bar_w = bar_x2 - bar_x1
+
+        # Background track
+        self.canvas.create_rectangle(bar_x1, bar_y1, bar_x2, bar_y2, fill="#1E293B", outline="")
+
+        # Filled track
         ratio = max(0.0, min(1.0, rem / 5.0))
-        bar_w = int((w - 20) * ratio)
-        bar_col = "#00FF66" if rem > 2.0 else ("#FF9900" if rem > 1.0 else "#FF2222")
-        self.canvas.create_rectangle(x1 + 10, y2 - 12, x1 + 10 + bar_w, y2 - 6, fill=bar_col, outline="")
-
-        # Text
-        status_txt = "💣 수류탄 쿠킹 중!" if rem > 1.5 else "⚠️ 지금 던지세요! (THROW)"
-        self.canvas.create_text(cx, cy - 8, text=f"{status_txt} {rem:.1f}s", fill="#FFFFFF", font=("Segoe UI", 12, "bold"))
+        filled_w = int(bar_w * ratio)
+        if filled_w > 0:
+            self.canvas.create_rectangle(bar_x1, bar_y1, bar_x1 + filled_w, bar_y2, fill=border_col, outline="")
 
     def draw_bluezone_hud(self):
         if not self.state.bluezone_active:
@@ -428,109 +450,155 @@ class PubgOverlayApp:
         mm, ss = divmod(rem, 60)
         time_str = f"{mm:02d}:{ss:02d}"
 
-        mode_str = "축소 진행 중" if self.state.bluezone_is_shrinking else "대기 시간"
-        mode_col = "#FF5555" if self.state.bluezone_is_shrinking else "#00FFCC"
+        is_shrinking = self.state.bluezone_is_shrinking
+        mode_str = "SHRINKING (축소 중)" if is_shrinking else "WAITING (대기 중)"
+        theme_col = "#F43F5E" if is_shrinking else "#06B6D4"
+        card_fill = "#160A10" if is_shrinking else "#081018"
 
-        w, h = 320, 48
+        w, h = 340, 52
         x1, y1 = cx - w // 2, top_y
         x2, y2 = cx + w // 2, top_y + h
 
-        # Glass panel
-        self.canvas.create_rectangle(x1, y1, x2, y2, fill="#0F111A", outline=mode_col, width=2)
-        txt = f"[{phase_info['phase']}페이즈 {mode_str}] {time_str}"
-        self.canvas.create_text(cx, top_y + 24, text=txt, fill="#FFFFFF", font=("Segoe UI", 13, "bold"))
+        # Drop shadow
+        self.canvas.create_rectangle(x1 + 4, y1 + 4, x2 + 4, y2 + 4, fill="#020617", outline="")
+        # Outer Card
+        self.canvas.create_rectangle(x1, y1, x2, y2, fill=card_fill, outline=theme_col, width=2)
+
+        # Phase indicator dots
+        dot_str = " ".join(["●" if i <= self.state.current_phase_idx else "○" for i in range(8)])
+        self.canvas.create_text(cx, top_y + 14, text=f"PHASE {phase_info['phase']}  [{dot_str}]", fill="#94A3B8", font=("Segoe UI", 8, "bold"))
+
+        # Time & Mode
+        self.canvas.create_text(cx - 50, top_y + 34, text=mode_str, fill=theme_col, font=("Segoe UI", 10, "bold"))
+        self.canvas.create_text(cx + 80, top_y + 34, text=time_str, fill="#FFFFFF", font=("Segoe UI", 13, "bold"))
 
     def draw_loot_hud(self):
-        """Loot & Attachment Checklist HUD rendered when TAB (or configured key) is pressed"""
+        """High-end esports / commercial tactical inventory checklist HUD"""
         if not self.loot_visible:
             return
 
-        # Position at top right
-        panel_w = 340
-        panel_h = 490
-        px = self.screen_width - panel_w - 40
-        py = 90
+        panel_w = 360
+        panel_h = 515
+        px = self.screen_width - panel_w - 35
+        py = 85
 
-        # Background panel (Dark glass card)
-        self.canvas.create_rectangle(px, py, px + panel_w, py + panel_h, fill="#0E121B", outline="#2F3B52", width=2)
+        # 1. Drop shadow
+        self.canvas.create_rectangle(px + 6, py + 6, px + panel_w + 6, py + panel_h + 6, fill="#020617", outline="")
 
-        # Header
-        self.canvas.create_rectangle(px, py, px + panel_w, py + 38, fill="#1B2232", outline="")
+        # 2. Main Glass Card
+        self.canvas.create_rectangle(px, py, px + panel_w, py + panel_h, fill="#090E17", outline="#1E293B", width=2)
+
+        # 3. Header Titlebar
+        self.canvas.create_rectangle(px, py, px + panel_w, py + 42, fill="#0F172A", outline="")
+        self.canvas.create_line(px, py + 42, px + panel_w, py + 42, fill="#2563EB", width=1.5)
+
+        # Title + Beacon
+        self.canvas.create_oval(px + 14, py + 18, px + 22, py + 26, fill="#10B981", outline="")
+        self.canvas.create_text(px + 28, py + 21, text="TACTICAL COMPANION PRO", anchor="w", fill="#38BDF8", font=("Segoe UI", 10, "bold"))
+
+        # OCR Pill
+        ocr_bg = "#064E3B" if self.ocr_enabled else "#1E293B"
+        ocr_border = "#10B981" if self.ocr_enabled else "#475569"
+        ocr_txt = "● OCR ON" if self.ocr_enabled else "○ OCR OFF"
+        ocr_col = "#34D399" if self.ocr_enabled else "#94A3B8"
+        self.canvas.create_rectangle(px + panel_w - 120, py + 11, px + panel_w - 55, py + 31, fill=ocr_bg, outline=ocr_border, width=1)
+        self.canvas.create_text(px + panel_w - 87, py + 21, text=ocr_txt, fill=ocr_col, font=("Segoe UI", 8, "bold"))
+
+        # Preset key badge
+        self.canvas.create_text(px + panel_w - 14, py + 21, text="[F4]", anchor="e", fill="#64748B", font=("Segoe UI", 9, "bold"))
+
+        curr_y = py + 54
+
+        # Preset summary banner
         preset = self.state.current_preset
-        self.canvas.create_text(px + 15, py + 19, text="📦 파밍 가이드 & 부착물 체크", anchor="w", fill="#00FFCC", font=("Segoe UI", 11, "bold"))
-        
-        # OCR Badge
-        ocr_badge = "📷 OCR: ON" if self.ocr_enabled else "📷 OCR: OFF"
-        ocr_col = "#00FF66" if self.ocr_enabled else "#8899AA"
-        self.canvas.create_text(px + panel_w - 75, py + 19, text=ocr_badge, anchor="e", fill=ocr_col, font=("Segoe UI", 9, "bold"))
-        self.canvas.create_text(px + panel_w - 15, py + 19, text="[F4] 변경", anchor="e", fill="#8899AA", font=("Segoe UI", 9))
+        self.canvas.create_rectangle(px + 12, curr_y, px + panel_w - 12, curr_y + 26, fill="#0D1526", outline="#1E3A8A", width=1)
+        self.canvas.create_text(px + 20, curr_y + 13, text=f"LOADOUT: {preset['name']}", anchor="w", fill="#93C5FD", font=("Segoe UI", 8, "bold"))
+        curr_y += 34
 
-        curr_y = py + 48
-
-        # Current Preset Name
-        self.canvas.create_text(px + 15, curr_y, text=f"• 세팅: {preset['name']}", anchor="w", fill="#FFFFFF", font=("Segoe UI", 10, "bold"))
-        curr_y += 24
-
-        # Weapon 1 Attachments
+        # Weapon 1 Card
         w1 = preset["weapon1"]
-        self.canvas.create_text(px + 15, curr_y, text=f"🔫 {w1.name}", anchor="w", fill="#FFB703", font=("Segoe UI", 10, "bold"))
-        self.canvas.create_text(px + panel_w - 15, curr_y, text="[F5] 체크", anchor="e", fill="#778899", font=("Segoe UI", 9))
-        curr_y += 18
+        self.canvas.create_rectangle(px + 12, curr_y, px + panel_w - 12, curr_y + 118, fill="#0C1322", outline="#1E293B", width=1)
+        # Accent left line
+        self.canvas.create_line(px + 12, curr_y, px + 12, curr_y + 118, fill="#F59E0B", width=3)
+        self.canvas.create_text(px + 22, curr_y + 14, text=f"PRIMARY • {w1.name}", anchor="w", fill="#FDE047", font=("Segoe UI", 10, "bold"))
+        self.canvas.create_text(px + panel_w - 22, curr_y + 14, text="[F5 체크]", anchor="e", fill="#64748B", font=("Segoe UI", 8))
 
-        for idx, (att, is_checked) in enumerate(zip(w1.attachments, w1.checked)):
-            chk_icon = "[✔]" if is_checked else "[ ]"
-            color = "#00FF66" if is_checked else "#D0D6E0"
-            self.canvas.create_text(px + 25, curr_y, text=f"{chk_icon} {att}", anchor="w", fill=color, font=("Segoe UI", 9))
-            curr_y += 18
+        w1_y = curr_y + 32
+        for att, is_checked in zip(w1.attachments, w1.checked):
+            box_bg = "#064E3B" if is_checked else "#1E293B"
+            box_bd = "#10B981" if is_checked else "#475569"
+            chk_sym = "✓" if is_checked else ""
+            txt_col = "#F8FAFC" if is_checked else "#94A3B8"
 
-        curr_y += 6
+            # Checkbox
+            self.canvas.create_rectangle(px + 24, w1_y - 6, px + 36, w1_y + 6, fill=box_bg, outline=box_bd, width=1)
+            if chk_sym:
+                self.canvas.create_text(px + 30, w1_y, text=chk_sym, fill="#34D399", font=("Segoe UI", 8, "bold"))
+            self.canvas.create_text(px + 44, w1_y, text=att, anchor="w", fill=txt_col, font=("Segoe UI", 9))
+            w1_y += 19
 
-        # Weapon 2 Attachments
+        curr_y += 126
+
+        # Weapon 2 Card
         w2 = preset["weapon2"]
-        self.canvas.create_text(px + 15, curr_y, text=f"🎯 {w2.name}", anchor="w", fill="#00D2FF", font=("Segoe UI", 10, "bold"))
-        self.canvas.create_text(px + panel_w - 15, curr_y, text="[F6] 체크", anchor="e", fill="#778899", font=("Segoe UI", 9))
-        curr_y += 18
+        self.canvas.create_rectangle(px + 12, curr_y, px + panel_w - 12, curr_y + 118, fill="#0C1322", outline="#1E293B", width=1)
+        # Accent left line
+        self.canvas.create_line(px + 12, curr_y, px + 12, curr_y + 118, fill="#38BDF8", width=3)
+        self.canvas.create_text(px + 22, curr_y + 14, text=f"SECONDARY • {w2.name}", anchor="w", fill="#38BDF8", font=("Segoe UI", 10, "bold"))
+        self.canvas.create_text(px + panel_w - 22, curr_y + 14, text="[F6 체크]", anchor="e", fill="#64748B", font=("Segoe UI", 8))
 
-        for idx, (att, is_checked) in enumerate(zip(w2.attachments, w2.checked)):
-            chk_icon = "[✔]" if is_checked else "[ ]"
-            color = "#00FF66" if is_checked else "#D0D6E0"
-            self.canvas.create_text(px + 25, curr_y, text=f"{chk_icon} {att}", anchor="w", fill=color, font=("Segoe UI", 9))
-            curr_y += 18
+        w2_y = curr_y + 32
+        for att, is_checked in zip(w2.attachments, w2.checked):
+            box_bg = "#064E3B" if is_checked else "#1E293B"
+            box_bd = "#10B981" if is_checked else "#475569"
+            chk_sym = "✓" if is_checked else ""
+            txt_col = "#F8FAFC" if is_checked else "#94A3B8"
 
-        curr_y += 10
-        # Divider
-        self.canvas.create_line(px + 15, curr_y, px + panel_w - 15, curr_y, fill="#243046")
-        curr_y += 10
+            self.canvas.create_rectangle(px + 24, w2_y - 6, px + 36, w2_y + 6, fill=box_bg, outline=box_bd, width=1)
+            if chk_sym:
+                self.canvas.create_text(px + 30, w2_y, text=chk_sym, fill="#34D399", font=("Segoe UI", 8, "bold"))
+            self.canvas.create_text(px + 44, w2_y, text=att, anchor="w", fill=txt_col, font=("Segoe UI", 9))
+            w2_y += 19
 
-        # Consumables Target Section
-        self.canvas.create_text(px + 15, curr_y, text="🩹 필수 회복약 & 투척무기 목표치", anchor="w", fill="#FFAA00", font=("Segoe UI", 10, "bold"))
-        curr_y += 20
+        curr_y += 126
 
-        for item in self.state.consumables:
-            txt = f"• {item.name}: 목표 {item.target_count}개"
-            self.canvas.create_text(px + 25, curr_y, text=txt, anchor="w", fill="#E2E8F0", font=("Segoe UI", 9))
-            curr_y += 18
+        # Consumables Section Card
+        self.canvas.create_rectangle(px + 12, curr_y, px + panel_w - 12, curr_y + 98, fill="#0C1322", outline="#1E293B", width=1)
+        self.canvas.create_line(px + 12, curr_y, px + 12, curr_y + 98, fill="#10B981", width=3)
+        self.canvas.create_text(px + 22, curr_y + 14, text="BATTLE QUOTA • 필수 비축 소모품", anchor="w", fill="#34D399", font=("Segoe UI", 9, "bold"))
 
-        # Footer tips
-        self.canvas.create_line(px + 15, py + panel_h - 32, px + panel_w - 15, py + panel_h - 32, fill="#243046")
-        tip_txt = "TAB:표시 | [F8] OCR On/Off | [F7] 리셋"
-        self.canvas.create_text(px + panel_w // 2, py + panel_h - 16, text=tip_txt, fill="#708090", font=("Segoe UI", 8))
+        con_y = curr_y + 34
+        for item in self.state.consumables[:4]:
+            cur = item.current_count
+            tgt = item.target_count
+            is_full = cur >= tgt
+
+            # Visual progress blocks: e.g. ■■■□
+            filled = min(tgt, cur)
+            empty = max(0, tgt - filled)
+            blocks_str = "■" * filled + "□" * empty
+
+            self.canvas.create_text(px + 24, con_y, text=f"• {item.name}", anchor="w", fill="#E2E8F0", font=("Segoe UI", 8))
+            self.canvas.create_text(px + 160, con_y, text=blocks_str, anchor="w", fill="#10B981" if is_full else "#FBBF24", font=("Segoe UI", 7))
+            self.canvas.create_text(px + panel_w - 24, con_y, text=f"{cur}/{tgt}", anchor="e", fill="#F8FAFC" if is_full else "#94A3B8", font=("Segoe UI", 8, "bold"))
+            con_y += 15
+
+        # Footer tip
+        self.canvas.create_text(px + panel_w // 2, py + panel_h - 12, text="[TAB] 홀드 | [F8] OCR 토글 | [F7] 새 게임 리셋", fill="#64748B", font=("Segoe UI", 8))
 
     def draw_status_bar(self):
         """Top-left subtle status indicator"""
-        # Shows when main panels are not open, as a minimal watermark guide
         if not self.loot_visible and not self.map_hud_visible and not self.map_pins_visible:
             ocr_flag = "ON" if self.ocr_enabled else "OFF"
             map_name = self.state.current_map_name.split()[0]
-            txt = f"[PUBG HUD] TAB:파밍 | M:지도핀({map_name}) | ~:요약 | F1:조준점 | F2:자기장 | F3:수류탄 | F4:총기 | F8:OCR({ocr_flag}) | F10:맵교체 | F9:종료"
-            self.canvas.create_text(15, 15, text=txt, anchor="nw", fill="#445566", font=("Segoe UI", 8))
+            txt = f"🛡️ BAN-SAFE OVERLAY V2.0 • [M] 전술지도({map_name}) | [TAB] 파밍가이드 | [~] 브리핑 | [F8] OCR({ocr_flag}) | [F10] 맵교체 | [F9] 종료"
+            self.canvas.create_text(16, 16, text=txt, anchor="nw", fill="#475569", font=("Segoe UI", 8, "bold"))
 
     def draw_map_pins(self):
-        """Draw pin markers directly over in-game map when M is pressed"""
+        """Draw high-contrast tactical pin markers directly over in-game map when M is pressed"""
         if not self.map_pins_visible:
             return
 
-        # In PUBG 16:9 full map, the map occupies a centered square (~94% of screen height)
         map_size = int(self.screen_height * 0.94)
         map_top = int(self.screen_height * 0.03)
         map_left = int((self.screen_width - map_size) // 2)
@@ -538,115 +606,142 @@ class PubgOverlayApp:
         map_name = self.state.current_map_name
         map_info = self.state.current_map_info
 
-        # Top info header bar
-        badge_w = 460
-        badge_h = 32
+        # Top Tactical Header Pill
+        badge_w = 480
+        badge_h = 34
         bx = self.screen_width // 2 - badge_w // 2
         by = map_top + 8
-        self.canvas.create_rectangle(bx, by, bx + badge_w, by + badge_h, fill="#0B111A", outline="#38BDF8", width=1.5)
+
+        # Shadow & Header
+        self.canvas.create_rectangle(bx + 4, by + 4, bx + badge_w + 4, by + badge_h + 4, fill="#020617", outline="")
+        self.canvas.create_rectangle(bx, by, bx + badge_w, by + badge_h, fill="#090E17", outline="#0284C7", width=1.5)
+        self.canvas.create_oval(bx + 14, by + 13, bx + 22, by + 21, fill="#0284C7", outline="")
         self.canvas.create_text(
-            self.screen_width // 2, by + 16,
-            text=f"🗺️ {map_name} 위치 마커 [M 또는 ESC로 닫기] | F10: 맵 변경",
-            fill="#38BDF8", font=("Segoe UI", 9, "bold")
+            bx + 30, by + 17,
+            text=f"TACTICAL RADAR • {map_name} (8x8 km)",
+            anchor="w", fill="#38BDF8", font=("Segoe UI", 9, "bold")
+        )
+        self.canvas.create_text(
+            bx + badge_w - 14, by + 17,
+            text="[M/ESC] 닫기 | [F10] 맵순환",
+            anchor="e", fill="#94A3B8", font=("Segoe UI", 8)
         )
 
-        # 1. Secret Rooms / Special Vaults (Yellow/Amber pins)
+        # 1. Secret Rooms / Vaults (Pulsing Gold / Amber Pins)
         for room in map_info.get("secret_rooms", []):
             rx = map_left + int(room.get("x", 0.5) * map_size)
             ry = map_top + int(room.get("y", 0.5) * map_size)
             name = room.get("name", "비밀방")
 
-            # Outer glow and badge circle
-            self.canvas.create_oval(rx - 13, ry - 13, rx + 13, ry + 13, fill="#78350F", outline="#F59E0B", width=2)
-            self.canvas.create_text(rx, ry, text="🔑", font=("Segoe UI", 10))
+            # Outer target crosshair ring
+            self.canvas.create_oval(rx - 15, ry - 15, rx + 15, ry + 15, fill="", outline="#78350F", width=1)
+            # Glowing core
+            self.canvas.create_oval(rx - 11, ry - 11, rx + 11, ry + 11, fill="#92400E", outline="#FBBF24", width=2)
+            self.canvas.create_text(rx, ry, text="🔑", font=("Segoe UI", 8))
 
-            # Label badge below pin
-            text_w = max(50, len(name) * 11 + 10)
-            self.canvas.create_rectangle(rx - text_w // 2, ry + 14, rx + text_w // 2, ry + 28, fill="#0F172A", outline="#F59E0B", width=1)
-            self.canvas.create_text(rx, ry + 21, text=name, fill="#FDE68A", font=("Segoe UI", 8, "bold"))
+            # Callout badge underneath
+            text_w = max(54, len(name) * 11 + 10)
+            self.canvas.create_rectangle(rx - text_w // 2, ry + 13, rx + text_w // 2, ry + 27, fill="#090E17", outline="#F59E0B", width=1)
+            self.canvas.create_text(rx, ry + 20, text=name, fill="#FDE68A", font=("Segoe UI", 8, "bold"))
 
-        # 2. Fixed Garages & Vehicle Spawns (Emerald/Green pins)
+        # 2. Fixed Garages & Vehicle Spawns (Emerald / Green Pins)
         for v in map_info.get("vehicles", []):
             vx = map_left + int(v.get("x", 0.5) * map_size)
             vy = map_top + int(v.get("y", 0.5) * map_size)
             vtype = v.get("type", "차량")
 
-            # Outer glow and badge circle
-            self.canvas.create_oval(vx - 12, vy - 12, vx + 12, vy + 12, fill="#064E3B", outline="#10B981", width=2)
-            self.canvas.create_text(vx, vy, text="🚗", font=("Segoe UI", 9))
+            # Outer target crosshair ring
+            self.canvas.create_oval(vx - 14, vy - 14, vx + 14, vy + 14, fill="", outline="#064E3B", width=1)
+            # Glowing core
+            self.canvas.create_oval(vx - 10, vy - 10, vx + 10, vy + 10, fill="#047857", outline="#34D399", width=2)
+            self.canvas.create_text(vx, vy, text="🚗", font=("Segoe UI", 8))
 
-            # Label badge below pin
-            text_w = max(55, len(vtype) * 10 + 10)
-            self.canvas.create_rectangle(vx - text_w // 2, vy + 13, vx + text_w // 2, vy + 27, fill="#0F172A", outline="#10B981", width=1)
-            self.canvas.create_text(vx, vy + 20, text=vtype, fill="#A7F3D0", font=("Segoe UI", 7, "bold"))
+            # Callout badge underneath
+            text_w = max(56, len(vtype) * 10 + 10)
+            self.canvas.create_rectangle(vx - text_w // 2, vy + 12, vx + text_w // 2, vy + 26, fill="#090E17", outline="#10B981", width=1)
+            self.canvas.create_text(vx, vy + 19, text=vtype, fill="#A7F3D0", font=("Segoe UI", 7, "bold"))
 
     def draw_map_hud(self):
         """Map Vehicles & Secret Room locations panel (toggled with ~ or configured key)"""
         if not self.map_hud_visible:
             return
 
-        panel_w = 400
-        panel_h = 490
+        panel_w = 410
+        panel_h = 510
         px = 40
-        py = 90
+        py = 85
 
-        # Background panel (Dark glass card)
-        self.canvas.create_rectangle(px, py, px + panel_w, py + panel_h, fill="#0B111A", outline="#1E3A8A", width=2)
+        # 1. Drop shadow
+        self.canvas.create_rectangle(px + 6, py + 6, px + panel_w + 6, py + panel_h + 6, fill="#020617", outline="")
 
-        # Header
-        self.canvas.create_rectangle(px, py, px + panel_w, py + 38, fill="#172554", outline="")
+        # 2. Main Glass Card
+        self.canvas.create_rectangle(px, py, px + panel_w, py + panel_h, fill="#090E17", outline="#1E293B", width=2)
+
+        # 3. Header Titlebar
+        self.canvas.create_rectangle(px, py, px + panel_w, py + 42, fill="#0F172A", outline="")
+        self.canvas.create_line(px, py + 42, px + panel_w, py + 42, fill="#38BDF8", width=1.5)
+
         map_name = self.state.current_map_name
         map_info = self.state.current_map_info
 
-        self.canvas.create_text(px + 15, py + 19, text=f"🗺️ {map_name} 정보", anchor="w", fill="#38BDF8", font=("Segoe UI", 11, "bold"))
-        self.canvas.create_text(px + panel_w - 15, py + 19, text="[F10] 맵변경", anchor="e", fill="#93C5FD", font=("Segoe UI", 9, "bold"))
+        self.canvas.create_oval(px + 14, py + 18, px + 22, py + 26, fill="#38BDF8", outline="")
+        self.canvas.create_text(px + 28, py + 21, text=f"INTELLIGENCE DOSSIER • {map_name}", anchor="w", fill="#38BDF8", font=("Segoe UI", 10, "bold"))
+        self.canvas.create_text(px + panel_w - 14, py + 21, text="[F10] 맵변경", anchor="e", fill="#93C5FD", font=("Segoe UI", 8, "bold"))
 
-        curr_y = py + 48
+        curr_y = py + 54
 
-        # Map description
-        self.canvas.create_text(px + 15, curr_y, text=f"• {map_info['desc']}", anchor="w", fill="#94A3B8", font=("Segoe UI", 9))
-        curr_y += 24
+        # Description Card
+        self.canvas.create_rectangle(px + 12, curr_y, px + panel_w - 12, curr_y + 26, fill="#0D1526", outline="#1E3A8A", width=1)
+        self.canvas.create_text(px + 20, curr_y + 13, text=map_info["desc"], anchor="w", fill="#94A3B8", font=("Segoe UI", 8))
+        curr_y += 36
 
         # Section 1: Secret Rooms / Keys
+        sec_h = 20 + len(map_info["secret_rooms"][:6]) * 32
+        self.canvas.create_rectangle(px + 12, curr_y, px + panel_w - 12, curr_y + sec_h, fill="#0C1322", outline="#1E293B", width=1)
+        self.canvas.create_line(px + 12, curr_y, px + 12, curr_y + sec_h, fill="#F59E0B", width=3)
+
         key_label = "🔑 " + map_info["key_name"]
-        self.canvas.create_text(px + 15, curr_y, text=key_label, anchor="w", fill="#FBBF24", font=("Segoe UI", 10, "bold"))
-        curr_y += 18
+        self.canvas.create_text(px + 22, curr_y + 14, text=key_label, anchor="w", fill="#FBBF24", font=("Segoe UI", 9, "bold"))
+        room_y = curr_y + 32
 
-        sec_rooms = map_info["secret_rooms"]
-        for room in sec_rooms[:6]:
-            self.canvas.create_text(px + 22, curr_y, text=f"▶ {room['name']}", anchor="w", fill="#FDE68A", font=("Segoe UI", 9, "bold"))
-            curr_y += 15
-            self.canvas.create_text(px + 32, curr_y, text=f"{room['loc']}", anchor="w", fill="#CBD5E1", font=("Segoe UI", 8))
-            curr_y += 17
+        for room in map_info["secret_rooms"][:6]:
+            self.canvas.create_text(px + 26, room_y, text=f"▶ {room['name']}", anchor="w", fill="#FDE68A", font=("Segoe UI", 8, "bold"))
+            self.canvas.create_text(px + 36, room_y + 14, text=room["loc"], anchor="w", fill="#94A3B8", font=("Segoe UI", 7))
+            room_y += 30
 
-        curr_y += 4
-        self.canvas.create_line(px + 15, curr_y, px + panel_w - 15, curr_y, fill="#1E293B")
-        curr_y += 10
+        curr_y += sec_h + 12
 
         # Section 2: Vehicles & Spawns
-        self.canvas.create_text(px + 15, curr_y, text="🚗 차량 & 보트 주요 스폰 위치", anchor="w", fill="#34D399", font=("Segoe UI", 10, "bold"))
-        curr_y += 18
+        veh_h = 20 + len(map_info["vehicles"]) * 30
+        self.canvas.create_rectangle(px + 12, curr_y, px + panel_w - 12, curr_y + veh_h, fill="#0C1322", outline="#1E293B", width=1)
+        self.canvas.create_line(px + 12, curr_y, px + 12, curr_y + veh_h, fill="#10B981", width=3)
+
+        self.canvas.create_text(px + 22, curr_y + 14, text="🚗 HIGH-VALUE VEHICLE & BOAT SPAWNS", anchor="w", fill="#34D399", font=("Segoe UI", 9, "bold"))
+        veh_y = curr_y + 32
 
         for v in map_info["vehicles"]:
-            self.canvas.create_text(px + 22, curr_y, text=f"• {v['type']}", anchor="w", fill="#A7F3D0", font=("Segoe UI", 9, "bold"))
-            curr_y += 15
-            self.canvas.create_text(px + 32, curr_y, text=f"{v['loc']}", anchor="w", fill="#94A3B8", font=("Segoe UI", 8))
-            curr_y += 17
+            self.canvas.create_text(px + 26, veh_y, text=f"• {v['type']}", anchor="w", fill="#A7F3D0", font=("Segoe UI", 8, "bold"))
+            self.canvas.create_text(px + 36, veh_y + 13, text=v["loc"], anchor="w", fill="#64748B", font=("Segoe UI", 7))
+            veh_y += 28
 
         # Footer
-        self.canvas.create_line(px + 15, py + panel_h - 30, px + panel_w - 15, py + panel_h - 30, fill="#1E293B")
-        self.canvas.create_text(px + panel_w // 2, py + panel_h - 15, text="[~] 키로 켜기/끄기 토글 | [F10] 다른 맵 보기", fill="#64748B", font=("Segoe UI", 8))
+        self.canvas.create_text(px + panel_w // 2, py + panel_h - 12, text="[~] 키로 요약 닫기 | [M] 키를 누르면 게임 지도 위에 핀이 표시됩니다", fill="#64748B", font=("Segoe UI", 8))
 
     def draw_toast(self):
         if self.toast_msg and time.time() < self.toast_expire:
             cx = self.screen_width // 2
             ty = 90
             msg = self.toast_msg
-            w = max(260, len(msg) * 11 + 40)
+            w = max(280, len(msg) * 11 + 48)
             x1, y1 = cx - w // 2, ty - 16
             x2, y2 = cx + w // 2, ty + 16
-            self.canvas.create_rectangle(x1, y1, x2, y2, fill="#0F172A", outline="#38BDF8", width=1.5)
-            self.canvas.create_text(cx, ty, text=msg, fill="#F8FAFC", font=("Segoe UI", 10, "bold"))
+
+            # Drop shadow
+            self.canvas.create_rectangle(x1 + 3, y1 + 3, x2 + 3, y2 + 3, fill="#020617", outline="")
+            # Pill card
+            self.canvas.create_rectangle(x1, y1, x2, y2, fill="#090E17", outline="#38BDF8", width=1.5)
+            self.canvas.create_oval(x1 + 10, ty - 4, x1 + 18, ty + 4, fill="#38BDF8", outline="")
+            self.canvas.create_text(cx + 6, ty, text=msg, fill="#F8FAFC", font=("Segoe UI", 9, "bold"))
 
     def update_ui(self):
         if not self.running:
