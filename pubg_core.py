@@ -121,20 +121,20 @@ MAP_DATA = {
         "has_secret_room": True,
         "key_name": "비밀의 방 열쇠 (Secret Key)",
         "secret_rooms": [
-            {"name": "스튜디오 남서쪽 창고", "loc": "Studio 남서 삼거리 창고 (푸른 지붕)"},
-            {"name": "군부대(Army Camp) 북쪽", "loc": "Army Camp 북측 삼거리 판잣집"},
-            {"name": "터미널(Terminal) 남동쪽", "loc": "Terminal 남동 산자락 건물"},
-            {"name": "호산(Hosan) 북동쪽", "loc": "Hosan 외곽 2층 단독 가옥"},
-            {"name": "송암(Song Am) 남서쪽", "loc": "Song Am 남서 해안 도로변 창고"},
-            {"name": "용택(Yong Taek) 북쪽", "loc": "Yong Taek 북쪽 언덕 철문 창고"},
-            {"name": "강릉(Buk San Sa) 인근", "loc": "사찰 남쪽 계곡 바위 옆 건물"},
-            {"name": "공항(Airport) 북서쪽", "loc": "활주로 북서 외곽 붉은 지붕 창고"}
+            {"name": "스튜디오 남서쪽", "loc": "Studio 남서 삼거리 창고 (푸른 지붕)", "x": 0.28, "y": 0.65},
+            {"name": "군부대 북쪽", "loc": "Army Camp 북측 삼거리 판잣집", "x": 0.72, "y": 0.26},
+            {"name": "터미널 남동쪽", "loc": "Terminal 남동 산자락 건물", "x": 0.58, "y": 0.42},
+            {"name": "호산 북동쪽", "loc": "Hosan 외곽 2층 단독 가옥", "x": 0.46, "y": 0.53},
+            {"name": "송암 남서쪽", "loc": "Song Am 남서 해안 도로변 창고", "x": 0.32, "y": 0.36},
+            {"name": "용택 북쪽", "loc": "Yong Taek 북쪽 언덕 철문 창고", "x": 0.64, "y": 0.67},
+            {"name": "강릉 인근", "loc": "사찰 남쪽 계곡 바위 옆 건물", "x": 0.53, "y": 0.22},
+            {"name": "공항 북서쪽", "loc": "활주로 북서 외곽 붉은 지붕 창고", "x": 0.81, "y": 0.77}
         ],
         "vehicles": [
-            {"type": "포니 쿠페/다시아 고정 차고", "loc": "호산(Hosan) 시내 3거리 차고지"},
-            {"type": "쿠페 고정 차고", "loc": "터미널(Terminal) 진입로 차고지"},
-            {"type": "지프/픽업 차고", "loc": "스튜디오(Studio) 정문 삼거리"},
-            {"type": "해안선 보트", "loc": "송암(Song Am) 남쪽 선착장 & 모래사장"}
+            {"type": "포니 쿠페 차고", "loc": "호산(Hosan) 시내 3거리 차고지", "x": 0.44, "y": 0.51},
+            {"type": "쿠페 고정 차고", "loc": "터미널(Terminal) 진입로 차고지", "x": 0.55, "y": 0.41},
+            {"type": "지프/픽업 차고", "loc": "스튜디오(Studio) 정문 삼거리", "x": 0.30, "y": 0.63},
+            {"type": "해안선 보트", "loc": "송암(Song Am) 남쪽 선착장 & 모래사장", "x": 0.31, "y": 0.42}
         ]
     },
     "데스턴 (Deston)": {
@@ -142,17 +142,17 @@ MAP_DATA = {
         "has_secret_room": True,
         "key_name": "보안 키카드 (Security Keycard)",
         "secret_rooms": [
-            {"name": "립턴(Ripton) 고층 빌딩 비밀방", "loc": "Ripton 시내 초고층 빌딩 내부 보안실"},
-            {"name": "콘서트(Concert) 뒤편 트럭", "loc": "Concert 무대 뒤편 특수 보안 컨테이너"},
-            {"name": "수력발전소(Hydroelectric)", "loc": "댐 상부 제어실 보안실"},
-            {"name": "아레나(Arena) 지하 보안실", "loc": "Arena 경기장 지하 통제 구역"},
-            {"name": "바람발전(Wind Farm) 남쪽", "loc": "풍력단지 남쪽 단독 연구동"},
-            {"name": "물류단지(Logistics) 창고", "loc": "중앙 대형 물류창고 2층 통제실"}
+            {"name": "립턴 고층빌딩", "loc": "Ripton 시내 초고층 빌딩 내부 보안실", "x": 0.68, "y": 0.67},
+            {"name": "콘서트홀 뒤편", "loc": "Concert 무대 뒤편 특수 보안 컨테이너", "x": 0.52, "y": 0.48},
+            {"name": "수력발전소 댐", "loc": "댐 상부 제어실 보안실", "x": 0.24, "y": 0.35},
+            {"name": "아레나 지하", "loc": "Arena 경기장 지하 통제 구역", "x": 0.48, "y": 0.24},
+            {"name": "풍력발전 남쪽", "loc": "풍력단지 남쪽 단독 연구동", "x": 0.78, "y": 0.32},
+            {"name": "물류단지 창고", "loc": "중앙 대형 물류창고 2층 통제실", "x": 0.38, "y": 0.58}
         ],
         "vehicles": [
-            {"type": "에어보트(Airboat)", "loc": "늪지대(Swamp) 전역 및 수로 교차로"},
-            {"type": "기둥 보안차량 (Pillar Car)", "loc": "Ripton 경찰서 및 보안센터 차고"},
-            {"type": "고속 픽업트럭", "loc": "고속도로 톨게이트 및 주요 주유소"}
+            {"type": "에어보트 스폰", "loc": "늪지대(Swamp) 전역 및 수로 교차로", "x": 0.56, "y": 0.78},
+            {"type": "기둥 보안차량", "loc": "Ripton 경찰서 및 보안센터 차고", "x": 0.64, "y": 0.62},
+            {"type": "고속 픽업트럭", "loc": "고속도로 톨게이트 및 주요 주유소", "x": 0.38, "y": 0.70}
         ]
     },
     "론도 (Rondo)": {
@@ -160,16 +160,16 @@ MAP_DATA = {
         "has_secret_room": True,
         "key_name": "비밀 금고 열쇠 (Vault Key)",
         "secret_rooms": [
-            {"name": "자등(Jadeng) 도심 금고", "loc": "Jadeng 중앙 빌딩 지하 특수 금고"},
-            {"name": "연천(Yeoncheon) 사찰 금고", "loc": "Yeoncheon 사원 본당 뒤편 석조실"},
-            {"name": "공장(Factory) 관리동", "loc": "대형 조립라인 2층 보안 금고실"},
-            {"name": "린쟝(Rinjiang) 수상가옥", "loc": "강변 목조가옥 중앙 잠긴 철문"},
-            {"name": "테스트 트랙(Test Track)", "loc": "서킷 패독 1호 지하 창고"}
+            {"name": "자등 도심 금고", "loc": "Jadeng 중앙 빌딩 지하 특수 금고", "x": 0.46, "y": 0.52},
+            {"name": "연천 사찰 금고", "loc": "Yeoncheon 사원 본당 뒤편 석조실", "x": 0.34, "y": 0.38},
+            {"name": "공장 관리동", "loc": "대형 조립라인 2층 보안 금고실", "x": 0.51, "y": 0.30},
+            {"name": "린쟝 수상가옥", "loc": "강변 목조가옥 중앙 잠긴 철문", "x": 0.58, "y": 0.62},
+            {"name": "테스트 트랙", "loc": "서킷 패독 1호 지하 창고", "x": 0.72, "y": 0.44}
         ],
         "vehicles": [
-            {"type": "블랑(Blanc) SUV 고정 스폰", "loc": "Jadeng 고속화도로 나들목 차고"},
-            {"type": "우라우스(Urus) 트럭", "loc": "Factory 정문 주차장 & 물류 터미널"},
-            {"type": "모터사이클/버기", "loc": "중앙 평원 삼거리 주유소"}
+            {"type": "블랑 SUV 차고", "loc": "Jadeng 고속화도로 나들목 차고", "x": 0.48, "y": 0.50},
+            {"type": "우라우스 트럭", "loc": "Factory 정문 주차장 & 물류 터미널", "x": 0.53, "y": 0.32},
+            {"type": "버기/오토바이", "loc": "중앙 평원 삼거리 주유소", "x": 0.60, "y": 0.42}
         ]
     },
     "에란겔 (Erangel)": {
@@ -177,17 +177,17 @@ MAP_DATA = {
         "has_secret_room": False,
         "key_name": "지하실 나무 판자 (사격 파괴)",
         "secret_rooms": [
-            {"name": "포친키(Pochinki) 지하실", "loc": "Pochinki 남서쪽 파란 슬레이트 단독주택"},
-            {"name": "야스나야(Yasnaya) 북서", "loc": "Yasnaya 북서 언덕 2층 벽돌집"},
-            {"name": "밀타(Mylta) 서쪽 지하실", "loc": "Mylta에서 밀베 다리 가는 삼거리 가옥"},
-            {"name": "로족(Rozhok) 언덕 지하실", "loc": "Rozhok 수영장 남쪽 고지대 가옥"},
-            {"name": "서버노(Severny) 남쪽", "loc": "Severny 진입로 꿀집 지하실"}
+            {"name": "포친키 지하실", "loc": "Pochinki 남서쪽 파란 슬레이트 단독주택", "x": 0.48, "y": 0.62},
+            {"name": "야스나야 북서", "loc": "Yasnaya 북서 언덕 2층 벽돌집", "x": 0.62, "y": 0.35},
+            {"name": "밀타 서쪽", "loc": "Mylta에서 밀베 다리 가는 삼거리 가옥", "x": 0.70, "y": 0.68},
+            {"name": "로족 언덕", "loc": "Rozhok 수영장 남쪽 고지대 가옥", "x": 0.50, "y": 0.40},
+            {"name": "서버노 남쪽", "loc": "Severny 진입로 꿀집 지하실", "x": 0.42, "y": 0.16}
         ],
         "vehicles": [
-            {"type": "다시아/UAZ 100% 확정 차고", "loc": "야스나야 남쪽 삼거리 / 로족 삼거리 차고"},
-            {"type": "포친키 외곽 차고지", "loc": "포친키 북동쪽 차고 딸린 2층집"},
-            {"type": "밀베 다리 검문 차고", "loc": "페리피어(Ferry Pier) 삼거리 차고"},
-            {"type": "보트 고정 스폰", "loc": "밀타 파워 해안가 및 소스노브카 남쪽 섬"}
+            {"type": "다시아 100% 차고", "loc": "야스나야 남쪽 삼거리 / 로족 삼거리 차고", "x": 0.51, "y": 0.42},
+            {"type": "포친키 차고", "loc": "포친키 북동쪽 차고 딸린 2층집", "x": 0.49, "y": 0.59},
+            {"type": "밀베 다리 차고", "loc": "페리피어(Ferry Pier) 삼거리 차고", "x": 0.36, "y": 0.78},
+            {"type": "보트 고정 스폰", "loc": "밀타 파워 해안가 및 소스노브카 남쪽 섬", "x": 0.85, "y": 0.56}
         ]
     },
     "미라마 (Miramar)": {
@@ -195,14 +195,14 @@ MAP_DATA = {
         "has_secret_room": False,
         "key_name": "특수 잠금 해제 구역",
         "secret_rooms": [
-            {"name": "하시엔다(Hacienda) 특수 차고", "loc": "Hacienda del Patron 1층 내부 차고"},
-            {"name": "로스 레오네스 창고", "loc": "Los Leones 남부 대형 공사장 창고"},
-            {"name": "오아시스(Oasis) 은신처", "loc": "북단 Oasis 계곡 바위 틈 텐트"}
+            {"name": "하시엔다 차고", "loc": "Hacienda del Patron 1층 내부 차고", "x": 0.55, "y": 0.38},
+            {"name": "로스 레오네스", "loc": "Los Leones 남부 대형 공사장 창고", "x": 0.62, "y": 0.66},
+            {"name": "오아시스 은신처", "loc": "북단 Oasis 계곡 바위 틈 텐트", "x": 0.52, "y": 0.08}
         ],
         "vehicles": [
-            {"type": "★ 황금 미라도 (Golden Mirado)", "loc": "하시엔다(Hacienda) 대저택 내부 차고"},
-            {"type": "픽업트럭 고정 차고", "loc": "페카도(Pecado) 카지노 뒤편 차고지"},
-            {"type": "버기/미라도 스폰", "loc": "엘 아자하르(El Azahar) 메인 도로변"}
+            {"type": "★ 황금 미라도", "loc": "하시엔다(Hacienda) 대저택 내부 차고", "x": 0.55, "y": 0.38},
+            {"type": "픽업트럭 고정 차고", "loc": "페카도(Pecado) 카지노 뒤편 차고지", "x": 0.47, "y": 0.52},
+            {"type": "버기/미라도 스폰", "loc": "엘 아자하르(El Azahar) 메인 도로변", "x": 0.74, "y": 0.45}
         ]
     }
 }

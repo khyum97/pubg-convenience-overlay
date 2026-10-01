@@ -10,12 +10,14 @@
     "reset_session": "VK_F7",
     "ocr_toggle": "VK_F8",
     "map_hud_toggle": "VK_OEM_3",
+    "map_pins_toggle": "VK_M",
     "map_switch": "VK_F10",
     "exit_app": "VK_F9"
   },
   "settings": {
     "loot_hud_hold_mode": true,
     "ocr_enabled": false,
+    "map_overlay_enabled": true,
     "sound_enabled": true,
     "crosshair_style": "dot",
     "crosshair_color": "#00FF66",

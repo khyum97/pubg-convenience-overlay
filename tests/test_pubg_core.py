@@ -110,6 +110,19 @@ class TestPubgCore(unittest.TestCase):
         self.assertGreaterEqual(len(info["secret_rooms"]), 5)
         self.assertGreaterEqual(len(info["vehicles"]), 3)
 
+        # Verify normalized coordinates (0.0 <= x <= 1.0, 0.0 <= y <= 1.0)
+        for room in info["secret_rooms"]:
+            self.assertIn("x", room)
+            self.assertIn("y", room)
+            self.assertTrue(0.0 <= room["x"] <= 1.0)
+            self.assertTrue(0.0 <= room["y"] <= 1.0)
+
+        for v in info["vehicles"]:
+            self.assertIn("x", v)
+            self.assertIn("y", v)
+            self.assertTrue(0.0 <= v["x"] <= 1.0)
+            self.assertTrue(0.0 <= v["y"] <= 1.0)
+
         next_m = self.sm.next_map()
         self.assertNotEqual(first_map, next_m)
         self.assertIn("데스턴", next_m)

@@ -37,6 +37,8 @@ VK_MAP = {
     "VK_F11": 0x7A,
     "VK_F12": 0x7B,
     "VK_OEM_3": 0xC0,      # `~` key
+    "VK_M": 0x4D,          # M key (In-game Map)
+    "VK_ESCAPE": 0x1B,     # ESC key
     "VK_LMENU": 0xA4,      # Left Alt
     "VK_XBUTTON1": 0x05,   # Mouse 4
     "VK_XBUTTON2": 0x06,   # Mouse 5
@@ -62,6 +64,7 @@ class PubgOverlayApp:
         # UI visibility flags
         self.loot_visible = False
         self.map_hud_visible = False
+        self.map_pins_visible = False
         self.running = True
 
         # OCR state & Toast notifications
@@ -94,12 +97,14 @@ class PubgOverlayApp:
                 "reset_session": "VK_F7",
                 "ocr_toggle": "VK_F8",
                 "map_hud_toggle": "VK_OEM_3",
+                "map_pins_toggle": "VK_M",
                 "map_switch": "VK_F10",
                 "exit_app": "VK_F9"
             },
             "settings": {
                 "loot_hud_hold_mode": True,
                 "ocr_enabled": False,
+                "map_overlay_enabled": True,
                 "sound_enabled": True,
                 "crosshair_style": "dot",
                 "crosshair_color": "#00FF66",
@@ -338,6 +343,20 @@ class PubgOverlayApp:
                 self.show_toast(f"🗺️ 현재 맵 변경: {new_map}")
             prev_states["f10"] = f10_down
 
+            # 8-5. In-Game Map Direct Pin Overlay (M key or configured key)
+            pins_vk = self.get_vk(hk.get("map_pins_toggle", "VK_M"))
+            pins_down = self.is_key_down(pins_vk)
+            if pins_down and not prev_states.get("pins", False):
+                self.map_pins_visible = not self.map_pins_visible
+                status_txt = "ON (지도 핀 표시)" if self.map_pins_visible else "OFF (지도 핀 숨김)"
+                self.play_sound(1200 if self.map_pins_visible else 600, 50)
+                self.show_toast(f"🗺️ [지도 핀 마커] {status_txt}")
+            prev_states["pins"] = pins_down
+
+            # ESC closes map pins overlay if open
+            if self.map_pins_visible and self.is_key_down(0x1B):
+                self.map_pins_visible = False
+
             # 9. Exit (F9)
             f9_vk = self.get_vk(hk.get("exit_app", "VK_F9"))
             f9_down = self.is_key_down(f9_vk)
@@ -500,11 +519,66 @@ class PubgOverlayApp:
     def draw_status_bar(self):
         """Top-left subtle status indicator"""
         # Shows when main panels are not open, as a minimal watermark guide
-        if not self.loot_visible and not self.map_hud_visible:
+        if not self.loot_visible and not self.map_hud_visible and not self.map_pins_visible:
             ocr_flag = "ON" if self.ocr_enabled else "OFF"
             map_name = self.state.current_map_name.split()[0]
-            txt = f"[PUBG HUD] TAB:파밍 | ~:맵정보({map_name}) | F1:조준점 | F2:자기장 | F3:수류탄 | F4:총기 | F8:OCR({ocr_flag}) | F10:맵교체 | F9:종료"
+            txt = f"[PUBG HUD] TAB:파밍 | M:지도핀({map_name}) | ~:요약 | F1:조준점 | F2:자기장 | F3:수류탄 | F4:총기 | F8:OCR({ocr_flag}) | F10:맵교체 | F9:종료"
             self.canvas.create_text(15, 15, text=txt, anchor="nw", fill="#445566", font=("Segoe UI", 8))
+
+    def draw_map_pins(self):
+        """Draw pin markers directly over in-game map when M is pressed"""
+        if not self.map_pins_visible:
+            return
+
+        # In PUBG 16:9 full map, the map occupies a centered square (~94% of screen height)
+        map_size = int(self.screen_height * 0.94)
+        map_top = int(self.screen_height * 0.03)
+        map_left = int((self.screen_width - map_size) // 2)
+
+        map_name = self.state.current_map_name
+        map_info = self.state.current_map_info
+
+        # Top info header bar
+        badge_w = 460
+        badge_h = 32
+        bx = self.screen_width // 2 - badge_w // 2
+        by = map_top + 8
+        self.canvas.create_rectangle(bx, by, bx + badge_w, by + badge_h, fill="#0B111A", outline="#38BDF8", width=1.5)
+        self.canvas.create_text(
+            self.screen_width // 2, by + 16,
+            text=f"🗺️ {map_name} 위치 마커 [M 또는 ESC로 닫기] | F10: 맵 변경",
+            fill="#38BDF8", font=("Segoe UI", 9, "bold")
+        )
+
+        # 1. Secret Rooms / Special Vaults (Yellow/Amber pins)
+        for room in map_info.get("secret_rooms", []):
+            rx = map_left + int(room.get("x", 0.5) * map_size)
+            ry = map_top + int(room.get("y", 0.5) * map_size)
+            name = room.get("name", "비밀방")
+
+            # Outer glow and badge circle
+            self.canvas.create_oval(rx - 13, ry - 13, rx + 13, ry + 13, fill="#78350F", outline="#F59E0B", width=2)
+            self.canvas.create_text(rx, ry, text="🔑", font=("Segoe UI", 10))
+
+            # Label badge below pin
+            text_w = max(50, len(name) * 11 + 10)
+            self.canvas.create_rectangle(rx - text_w // 2, ry + 14, rx + text_w // 2, ry + 28, fill="#0F172A", outline="#F59E0B", width=1)
+            self.canvas.create_text(rx, ry + 21, text=name, fill="#FDE68A", font=("Segoe UI", 8, "bold"))
+
+        # 2. Fixed Garages & Vehicle Spawns (Emerald/Green pins)
+        for v in map_info.get("vehicles", []):
+            vx = map_left + int(v.get("x", 0.5) * map_size)
+            vy = map_top + int(v.get("y", 0.5) * map_size)
+            vtype = v.get("type", "차량")
+
+            # Outer glow and badge circle
+            self.canvas.create_oval(vx - 12, vy - 12, vx + 12, vy + 12, fill="#064E3B", outline="#10B981", width=2)
+            self.canvas.create_text(vx, vy, text="🚗", font=("Segoe UI", 9))
+
+            # Label badge below pin
+            text_w = max(55, len(vtype) * 10 + 10)
+            self.canvas.create_rectangle(vx - text_w // 2, vy + 13, vx + text_w // 2, vy + 27, fill="#0F172A", outline="#10B981", width=1)
+            self.canvas.create_text(vx, vy + 20, text=vtype, fill="#A7F3D0", font=("Segoe UI", 7, "bold"))
 
     def draw_map_hud(self):
         """Map Vehicles & Secret Room locations panel (toggled with ~ or configured key)"""
@@ -584,6 +658,7 @@ class PubgOverlayApp:
         self.draw_bluezone_hud()
         self.draw_loot_hud()
         self.draw_map_hud()
+        self.draw_map_pins()
         self.draw_status_bar()
         self.draw_toast()
 
