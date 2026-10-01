@@ -102,6 +102,18 @@ class TestPubgCore(unittest.TestCase):
         smoke = self.sm.consumables[2] # 연막탄
         self.assertEqual(smoke.current_count, 2)
 
+    def test_map_data_and_cycling(self):
+        first_map = self.sm.current_map_name
+        self.assertIn("태이고", first_map)
+        info = self.sm.current_map_info
+        self.assertTrue(info["has_secret_room"])
+        self.assertGreaterEqual(len(info["secret_rooms"]), 5)
+        self.assertGreaterEqual(len(info["vehicles"]), 3)
+
+        next_m = self.sm.next_map()
+        self.assertNotEqual(first_map, next_m)
+        self.assertIn("데스턴", next_m)
+
 if __name__ == "__main__":
     unittest.main()
 

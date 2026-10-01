@@ -115,6 +115,98 @@ BLUEZONE_PHASES = [
     {"phase": 8, "wait_sec": 30,  "shrink_sec": 20,  "desc": "8페이즈 (최종 승부)"},
 ]
 
+MAP_DATA = {
+    "태이고 (Taego)": {
+        "desc": "8x8km 대형 맵 (비밀의 방 열쇠 스폰)",
+        "has_secret_room": True,
+        "key_name": "비밀의 방 열쇠 (Secret Key)",
+        "secret_rooms": [
+            {"name": "스튜디오 남서쪽 창고", "loc": "Studio 남서 삼거리 창고 (푸른 지붕)"},
+            {"name": "군부대(Army Camp) 북쪽", "loc": "Army Camp 북측 삼거리 판잣집"},
+            {"name": "터미널(Terminal) 남동쪽", "loc": "Terminal 남동 산자락 건물"},
+            {"name": "호산(Hosan) 북동쪽", "loc": "Hosan 외곽 2층 단독 가옥"},
+            {"name": "송암(Song Am) 남서쪽", "loc": "Song Am 남서 해안 도로변 창고"},
+            {"name": "용택(Yong Taek) 북쪽", "loc": "Yong Taek 북쪽 언덕 철문 창고"},
+            {"name": "강릉(Buk San Sa) 인근", "loc": "사찰 남쪽 계곡 바위 옆 건물"},
+            {"name": "공항(Airport) 북서쪽", "loc": "활주로 북서 외곽 붉은 지붕 창고"}
+        ],
+        "vehicles": [
+            {"type": "포니 쿠페/다시아 고정 차고", "loc": "호산(Hosan) 시내 3거리 차고지"},
+            {"type": "쿠페 고정 차고", "loc": "터미널(Terminal) 진입로 차고지"},
+            {"type": "지프/픽업 차고", "loc": "스튜디오(Studio) 정문 삼거리"},
+            {"type": "해안선 보트", "loc": "송암(Song Am) 남쪽 선착장 & 모래사장"}
+        ]
+    },
+    "데스턴 (Deston)": {
+        "desc": "8x8km 대도시 맵 (보안 키카드 & 드론방)",
+        "has_secret_room": True,
+        "key_name": "보안 키카드 (Security Keycard)",
+        "secret_rooms": [
+            {"name": "립턴(Ripton) 고층 빌딩 비밀방", "loc": "Ripton 시내 초고층 빌딩 내부 보안실"},
+            {"name": "콘서트(Concert) 뒤편 트럭", "loc": "Concert 무대 뒤편 특수 보안 컨테이너"},
+            {"name": "수력발전소(Hydroelectric)", "loc": "댐 상부 제어실 보안실"},
+            {"name": "아레나(Arena) 지하 보안실", "loc": "Arena 경기장 지하 통제 구역"},
+            {"name": "바람발전(Wind Farm) 남쪽", "loc": "풍력단지 남쪽 단독 연구동"},
+            {"name": "물류단지(Logistics) 창고", "loc": "중앙 대형 물류창고 2층 통제실"}
+        ],
+        "vehicles": [
+            {"type": "에어보트(Airboat)", "loc": "늪지대(Swamp) 전역 및 수로 교차로"},
+            {"type": "기둥 보안차량 (Pillar Car)", "loc": "Ripton 경찰서 및 보안센터 차고"},
+            {"type": "고속 픽업트럭", "loc": "고속도로 톨게이트 및 주요 주유소"}
+        ]
+    },
+    "론도 (Rondo)": {
+        "desc": "8x8km 동양풍 맵 (금고실 열쇠 & 테일게이트)",
+        "has_secret_room": True,
+        "key_name": "비밀 금고 열쇠 (Vault Key)",
+        "secret_rooms": [
+            {"name": "자등(Jadeng) 도심 금고", "loc": "Jadeng 중앙 빌딩 지하 특수 금고"},
+            {"name": "연천(Yeoncheon) 사찰 금고", "loc": "Yeoncheon 사원 본당 뒤편 석조실"},
+            {"name": "공장(Factory) 관리동", "loc": "대형 조립라인 2층 보안 금고실"},
+            {"name": "린쟝(Rinjiang) 수상가옥", "loc": "강변 목조가옥 중앙 잠긴 철문"},
+            {"name": "테스트 트랙(Test Track)", "loc": "서킷 패독 1호 지하 창고"}
+        ],
+        "vehicles": [
+            {"type": "블랑(Blanc) SUV 고정 스폰", "loc": "Jadeng 고속화도로 나들목 차고"},
+            {"type": "우라우스(Urus) 트럭", "loc": "Factory 정문 주차장 & 물류 터미널"},
+            {"type": "모터사이클/버기", "loc": "중앙 평원 삼거리 주유소"}
+        ]
+    },
+    "에란겔 (Erangel)": {
+        "desc": "8x8km 오리지널 맵 (지하실 & 고정 차고지)",
+        "has_secret_room": False,
+        "key_name": "지하실 나무 판자 (사격 파괴)",
+        "secret_rooms": [
+            {"name": "포친키(Pochinki) 지하실", "loc": "Pochinki 남서쪽 파란 슬레이트 단독주택"},
+            {"name": "야스나야(Yasnaya) 북서", "loc": "Yasnaya 북서 언덕 2층 벽돌집"},
+            {"name": "밀타(Mylta) 서쪽 지하실", "loc": "Mylta에서 밀베 다리 가는 삼거리 가옥"},
+            {"name": "로족(Rozhok) 언덕 지하실", "loc": "Rozhok 수영장 남쪽 고지대 가옥"},
+            {"name": "서버노(Severny) 남쪽", "loc": "Severny 진입로 꿀집 지하실"}
+        ],
+        "vehicles": [
+            {"type": "다시아/UAZ 100% 확정 차고", "loc": "야스나야 남쪽 삼거리 / 로족 삼거리 차고"},
+            {"type": "포친키 외곽 차고지", "loc": "포친키 북동쪽 차고 딸린 2층집"},
+            {"type": "밀베 다리 검문 차고", "loc": "페리피어(Ferry Pier) 삼거리 차고"},
+            {"type": "보트 고정 스폰", "loc": "밀타 파워 해안가 및 소스노브카 남쪽 섬"}
+        ]
+    },
+    "미라마 (Miramar)": {
+        "desc": "8x8km 사막 맵 (특수 차량 & 황금 미라도)",
+        "has_secret_room": False,
+        "key_name": "특수 잠금 해제 구역",
+        "secret_rooms": [
+            {"name": "하시엔다(Hacienda) 특수 차고", "loc": "Hacienda del Patron 1층 내부 차고"},
+            {"name": "로스 레오네스 창고", "loc": "Los Leones 남부 대형 공사장 창고"},
+            {"name": "오아시스(Oasis) 은신처", "loc": "북단 Oasis 계곡 바위 틈 텐트"}
+        ],
+        "vehicles": [
+            {"type": "★ 황금 미라도 (Golden Mirado)", "loc": "하시엔다(Hacienda) 대저택 내부 차고"},
+            {"type": "픽업트럭 고정 차고", "loc": "페카도(Pecado) 카지노 뒤편 차고지"},
+            {"type": "버기/미라도 스폰", "loc": "엘 아자하르(El Azahar) 메인 도로변"}
+        ]
+    }
+}
+
 class GameStateManager:
     def __init__(self):
         self.presets = [
@@ -141,7 +233,21 @@ class GameStateManager:
 
         # Grenade timer state
         self.grenade_active = False
-        self.grenade_remaining_sec = 0.0
+        # Map info state
+        self.map_names = list(MAP_DATA.keys())
+        self.current_map_idx = 0
+
+    @property
+    def current_map_name(self) -> str:
+        return self.map_names[self.current_map_idx]
+
+    @property
+    def current_map_info(self) -> dict:
+        return MAP_DATA[self.current_map_name]
+
+    def next_map(self) -> str:
+        self.current_map_idx = (self.current_map_idx + 1) % len(self.map_names)
+        return self.current_map_name
 
     @property
     def current_preset(self) -> dict:

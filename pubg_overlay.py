@@ -61,6 +61,7 @@ class PubgOverlayApp:
 
         # UI visibility flags
         self.loot_visible = False
+        self.map_hud_visible = False
         self.running = True
 
         # OCR state & Toast notifications
@@ -92,6 +93,8 @@ class PubgOverlayApp:
                 "toggle_part_w2": "VK_F6",
                 "reset_session": "VK_F7",
                 "ocr_toggle": "VK_F8",
+                "map_hud_toggle": "VK_OEM_3",
+                "map_switch": "VK_F10",
                 "exit_app": "VK_F9"
             },
             "settings": {
@@ -316,6 +319,25 @@ class PubgOverlayApp:
                     self.show_toast("📷 [OCR 자동 인식] OFF: 수동 모드")
             prev_states["f8"] = f8_down
 
+            # 8-3. Map Info HUD Toggle (~ / tilde or configured key)
+            map_vk = self.get_vk(hk.get("map_hud_toggle", "VK_OEM_3"))
+            map_down = self.is_key_down(map_vk)
+            if map_down and not prev_states.get("map_hud", False):
+                self.map_hud_visible = not self.map_hud_visible
+                status_txt = "표시" if self.map_hud_visible else "숨김"
+                self.play_sound(1100 if self.map_hud_visible else 600, 60)
+                self.show_toast(f"🗺️ [차량 & 비밀방 지도] {status_txt}")
+            prev_states["map_hud"] = map_down
+
+            # 8-4. Map Switch (F10)
+            f10_vk = self.get_vk(hk.get("map_switch", "VK_F10"))
+            f10_down = self.is_key_down(f10_vk)
+            if f10_down and not prev_states.get("f10", False):
+                new_map = self.state.next_map()
+                self.play_sound(1050, 70)
+                self.show_toast(f"🗺️ 현재 맵 변경: {new_map}")
+            prev_states["f10"] = f10_down
+
             # 9. Exit (F9)
             f9_vk = self.get_vk(hk.get("exit_app", "VK_F9"))
             f9_down = self.is_key_down(f9_vk)
@@ -477,11 +499,69 @@ class PubgOverlayApp:
 
     def draw_status_bar(self):
         """Top-left subtle status indicator"""
-        # Shows when TAB is not held, as a minimal watermark guide
-        if not self.loot_visible:
+        # Shows when main panels are not open, as a minimal watermark guide
+        if not self.loot_visible and not self.map_hud_visible:
             ocr_flag = "ON" if self.ocr_enabled else "OFF"
-            txt = f"[PUBG HUD] TAB:파밍체커 | F1:조준점 | F2:자기장 | F3:수류탄 | F4:총기프리셋 | F8:OCR({ocr_flag}) | F9:종료"
+            map_name = self.state.current_map_name.split()[0]
+            txt = f"[PUBG HUD] TAB:파밍 | ~:맵정보({map_name}) | F1:조준점 | F2:자기장 | F3:수류탄 | F4:총기 | F8:OCR({ocr_flag}) | F10:맵교체 | F9:종료"
             self.canvas.create_text(15, 15, text=txt, anchor="nw", fill="#445566", font=("Segoe UI", 8))
+
+    def draw_map_hud(self):
+        """Map Vehicles & Secret Room locations panel (toggled with ~ or configured key)"""
+        if not self.map_hud_visible:
+            return
+
+        panel_w = 400
+        panel_h = 490
+        px = 40
+        py = 90
+
+        # Background panel (Dark glass card)
+        self.canvas.create_rectangle(px, py, px + panel_w, py + panel_h, fill="#0B111A", outline="#1E3A8A", width=2)
+
+        # Header
+        self.canvas.create_rectangle(px, py, px + panel_w, py + 38, fill="#172554", outline="")
+        map_name = self.state.current_map_name
+        map_info = self.state.current_map_info
+
+        self.canvas.create_text(px + 15, py + 19, text=f"🗺️ {map_name} 정보", anchor="w", fill="#38BDF8", font=("Segoe UI", 11, "bold"))
+        self.canvas.create_text(px + panel_w - 15, py + 19, text="[F10] 맵변경", anchor="e", fill="#93C5FD", font=("Segoe UI", 9, "bold"))
+
+        curr_y = py + 48
+
+        # Map description
+        self.canvas.create_text(px + 15, curr_y, text=f"• {map_info['desc']}", anchor="w", fill="#94A3B8", font=("Segoe UI", 9))
+        curr_y += 24
+
+        # Section 1: Secret Rooms / Keys
+        key_label = "🔑 " + map_info["key_name"]
+        self.canvas.create_text(px + 15, curr_y, text=key_label, anchor="w", fill="#FBBF24", font=("Segoe UI", 10, "bold"))
+        curr_y += 18
+
+        sec_rooms = map_info["secret_rooms"]
+        for room in sec_rooms[:6]:
+            self.canvas.create_text(px + 22, curr_y, text=f"▶ {room['name']}", anchor="w", fill="#FDE68A", font=("Segoe UI", 9, "bold"))
+            curr_y += 15
+            self.canvas.create_text(px + 32, curr_y, text=f"{room['loc']}", anchor="w", fill="#CBD5E1", font=("Segoe UI", 8))
+            curr_y += 17
+
+        curr_y += 4
+        self.canvas.create_line(px + 15, curr_y, px + panel_w - 15, curr_y, fill="#1E293B")
+        curr_y += 10
+
+        # Section 2: Vehicles & Spawns
+        self.canvas.create_text(px + 15, curr_y, text="🚗 차량 & 보트 주요 스폰 위치", anchor="w", fill="#34D399", font=("Segoe UI", 10, "bold"))
+        curr_y += 18
+
+        for v in map_info["vehicles"]:
+            self.canvas.create_text(px + 22, curr_y, text=f"• {v['type']}", anchor="w", fill="#A7F3D0", font=("Segoe UI", 9, "bold"))
+            curr_y += 15
+            self.canvas.create_text(px + 32, curr_y, text=f"{v['loc']}", anchor="w", fill="#94A3B8", font=("Segoe UI", 8))
+            curr_y += 17
+
+        # Footer
+        self.canvas.create_line(px + 15, py + panel_h - 30, px + panel_w - 15, py + panel_h - 30, fill="#1E293B")
+        self.canvas.create_text(px + panel_w // 2, py + panel_h - 15, text="[~] 키로 켜기/끄기 토글 | [F10] 다른 맵 보기", fill="#64748B", font=("Segoe UI", 8))
 
     def draw_toast(self):
         if self.toast_msg and time.time() < self.toast_expire:
@@ -503,6 +583,7 @@ class PubgOverlayApp:
         self.draw_grenade_hud()
         self.draw_bluezone_hud()
         self.draw_loot_hud()
+        self.draw_map_hud()
         self.draw_status_bar()
         self.draw_toast()
 

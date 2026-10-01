@@ -9,6 +9,8 @@
     "toggle_part_w2": "VK_F6",
     "reset_session": "VK_F7",
     "ocr_toggle": "VK_F8",
+    "map_hud_toggle": "VK_OEM_3",
+    "map_switch": "VK_F10",
     "exit_app": "VK_F9"
   },
   "settings": {
